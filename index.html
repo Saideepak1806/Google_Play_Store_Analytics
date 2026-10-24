@@ -1,0 +1,616 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1120">
+<meta name="description" content="Interactive Google Play Store analytics dashboard.">
+<title>Google Play Store Analytics</title>
+
+<style>
+:root {
+    --bg: #0b1120;
+    --panel: #141e30;
+    --border: #29374d;
+    --text: #f1f5f9;
+    --muted: #9eacc1;
+    --accent: #8ab4f8;
+    --green: #67d6a3;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    padding: 24px 18px;
+    background: #111b2c;
+    border-bottom: 1px solid var(--border);
+}
+
+.header img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.header-title {
+    text-align: center;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: clamp(20px, 3vw, 30px);
+}
+
+.header p {
+    margin: 7px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+}
+
+.hero {
+    max-width: 1600px;
+    margin: 28px auto 0;
+    padding: 0 24px;
+}
+
+.hero-panel {
+    padding: 34px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: linear-gradient(120deg, #192b43, #111a2a);
+}
+
+.eyebrow {
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+}
+
+.hero h2 {
+    margin: 12px 0;
+    font-size: clamp(28px, 4vw, 42px);
+    line-height: 1.2;
+}
+
+.hero p {
+    max-width: 800px;
+    color: #bdc9d9;
+    line-height: 1.7;
+}
+
+.metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.metric {
+    min-width: 140px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(255,255,255,.04);
+}
+
+.metric strong {
+    display: block;
+    font-size: 23px;
+}
+
+.metric span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.dashboard-heading {
+    max-width: 1600px;
+    margin: 34px auto 18px;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.dashboard-heading h2 {
+    margin: 0;
+    font-size: 23px;
+}
+
+.dashboard-heading p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.clock {
+    padding: 10px 14px;
+    border: 1px solid #304664;
+    border-radius: 9px;
+    background: #17263b;
+    color: var(--accent);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+/* One full-width container for each chart */
+.container {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 24px 36px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+}
+
+.plot-container {
+    width: 100%;
+    min-width: 0;
+    padding: 24px;
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    scroll-margin-top: 24px;
+}
+
+.plot-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.plot-heading h2 {
+    margin: 6px 0;
+    font-size: 20px;
+}
+
+.plot-heading p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.status {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.plot-container.available .status {
+    color: var(--green);
+    border-color: #285743;
+    background: #102a25;
+}
+
+.plot-content {
+    width: 100%;
+    min-width: 0;
+}
+
+.plot-content .plotly-graph-div,
+.plot-content .js-plotly-plot,
+.plot-content .svg-container {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.unavailable {
+    display: none;
+    min-height: 300px;
+    padding: 32px 18px;
+    text-align: center;
+    align-content: center;
+    border: 1px dashed #35445c;
+    border-radius: 12px;
+    background: #0e1625;
+}
+
+.plot-container.locked .plot-content {
+    display: none;
+}
+
+.plot-container.locked .unavailable {
+    display: grid;
+}
+
+.clock-icon {
+    color: var(--accent);
+    font-size: 36px;
+}
+
+.unavailable h3 {
+    margin: 10px 0 5px;
+}
+
+.unavailable p {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.window-label {
+    width: fit-content;
+    margin: 12px auto 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: var(--accent);
+    background: #192a42;
+    font-size: 12px;
+}
+
+.note {
+    max-width: 1552px;
+    margin: 0 auto 30px;
+    padding: 18px 22px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+footer {
+    padding: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+@media (max-width: 600px) {
+    .header {
+        gap: 10px;
+        padding: 18px 10px;
+    }
+
+    .header img {
+        width: 32px;
+        height: 32px;
+    }
+
+    .header p {
+        font-size: 9px;
+        letter-spacing: .7px;
+    }
+
+    .hero {
+        padding: 0 12px;
+    }
+
+    .hero-panel {
+        padding: 22px 18px;
+    }
+
+    .dashboard-heading {
+        padding: 0 12px;
+    }
+
+    .container {
+        padding: 0 12px 24px;
+        gap: 16px;
+    }
+
+    .plot-container {
+        padding: 12px;
+    }
+
+    .plot-heading h2 {
+        font-size: 17px;
+    }
+
+    .note {
+        margin: 0 12px 24px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+    <img
+        src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png"
+        alt="Google logo">
+
+    <div class="header-title">
+        <h1>Google Play Store Analytics</h1>
+        <p>DATA ANALYTICS &amp; BUSINESS INTELLIGENCE</p>
+    </div>
+
+    <img
+        src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+        alt="Google Play Store logo">
+</header>
+
+<section class="hero">
+    <div class="hero-panel">
+        <span class="eyebrow">INTERACTIVE ANALYTICS WORKSPACE</span>
+        <h2>Explore app performance.<br>Understand growth.</h2>
+        <p>
+            Analyze application ratings, installs, category performance,
+            monthly trends, customer reviews, and estimated revenue
+            through six interactive visualizations.
+        </p>
+
+        <div class="metrics">
+            <div class="metric">
+                <strong>06</strong>
+                <span>Analysis views</span>
+            </div>
+            <div class="metric">
+                <strong>02</strong>
+                <span>Source datasets</span>
+            </div>
+            <div class="metric">
+                <strong>IST</strong>
+                <span>Display schedule</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="dashboard-heading">
+    <div>
+        <h2>Analytics Dashboard</h2>
+        <p>Full-width interactive charts with scheduled IST visibility.</p>
+    </div>
+    <div class="clock" id="ist-clock">Loading IST...</div>
+</section>
+
+<div class="container">
+    
+    <section class="plot-container locked"
+             id="task-1"
+             data-start="17"
+             data-end="19">
+
+        <div class="plot-heading">
+            <div>
+                <span class="eyebrow">ANALYSIS 01</span>
+                <h2>App Size vs Rating</h2>
+                <p>App size, average rating and installs</p>
+            </div>
+            <span class="status">Scheduled</span>
+        </div>
+
+        <div class="plot-content">
+            <div>                        <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.5.0.min.js" integrity="sha256-fHbNLP+GlIXN+efbQec78UkemUz3NJp7UmfGxC1tNxs=" crossorigin="anonymous"></script>                <div id="f52e021e-439e-4d4b-b44b-fd4d19b6cd48" class="plotly-graph-div" style="height:550px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("f52e021e-439e-4d4b-b44b-fd4d19b6cd48")) {                    Plotly.newPlot(                        "f52e021e-439e-4d4b-b44b-fd4d19b6cd48",                        [{"customdata":[[62272,10000000.0,0.675,"\u0bb5\u0ba3\u0bbf\u0b95\u0bae\u0bcd"],[188841,5000000.0,0.6554310966810967,"\u0bb5\u0ba3\u0bbf\u0b95\u0bae\u0bcd"]],"hovertemplate":"\u003cb\u003e%{hovertext}\u003c\u002fb\u003e\u003cbr\u003e\u003cbr\u003eCategory=%{customdata[3]}\u003cbr\u003eApp Size (MB)=%{x:.1f}\u003cbr\u003eAverage Rating=%{y:.1f}\u003cbr\u003eInstalls=%{customdata[1]:,}\u003cbr\u003eReviews=%{customdata[0]:,}\u003cbr\u003eAvg_Sentiment_Subjectivity=%{customdata[2]:.3f}\u003cextra\u003e\u003c\u002fextra\u003e","hovertext":["Google Primer","Call Blocker"],"legendgroup":"\u0bb5\u0ba3\u0bbf\u0b95\u0bae\u0bcd","marker":{"color":"#636efa","size":{"dtype":"f8","bdata":"AAAAANASY0EAAAAA0BJTQQ=="},"sizemode":"area","sizeref":250000.0,"symbol":"circle","opacity":0.75},"mode":"markers","name":"\u0bb5\u0ba3\u0bbf\u0b95\u0bae\u0bcd","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"AAAAAAAAMkCamZmZmZkJQA=="},"xaxis":"x","y":{"dtype":"f8","bdata":"mpmZmZmZEUBmZmZmZmYSQA=="},"yaxis":"y","type":"scatter"},{"customdata":[[63543,5000000.0,0.5207789454813264,"COMMUNICATION"],[258556,10000000.0,0.5407398018648019,"COMMUNICATION"],[330761,10000000.0,0.518137446598985,"COMMUNICATION"],[483565,10000000.0,0.5064814814814815,"COMMUNICATION"],[14873,1000000.0,0.6361111111111111,"COMMUNICATION"],[9498,1000000.0,0.6000000000000001,"COMMUNICATION"]],"hovertemplate":"\u003cb\u003e%{hovertext}\u003c\u002fb\u003e\u003cbr\u003e\u003cbr\u003eCategory=%{customdata[3]}\u003cbr\u003eApp Size (MB)=%{x:.1f}\u003cbr\u003eAverage Rating=%{y:.1f}\u003cbr\u003eInstalls=%{customdata[1]:,}\u003cbr\u003eReviews=%{customdata[0]:,}\u003cbr\u003eAvg_Sentiment_Subjectivity=%{customdata[2]:.3f}\u003cextra\u003e\u003c\u002fextra\u003e","hovertext":["Chrome Dev","GMX Mail","GroupMe","CallApp: Caller ID, Blocker & Phone Call Recorder","Burner - Free Phone Number","Caller ID +"],"legendgroup":"COMMUNICATION","marker":{"color":"#EF553B","size":{"dtype":"f8","bdata":"AAAAANASU0EAAAAA0BJjQQAAAADQEmNBAAAAANASY0EAAAAAgIQuQQAAAACAhC5B"},"sizemode":"area","sizeref":250000.0,"symbol":"circle","opacity":0.75},"mode":"markers","name":"COMMUNICATION","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"AAAAAAAA+H8AAAAAAAD4fwAAAAAAAPh\u002fAAAAAAAANEAAAAAAAAD4f5qZmZmZmbk\u002f"},"xaxis":"x","y":{"dtype":"f8","bdata":"mpmZmZmZEUAzMzMzMzMRQAAAAAAAABJAmpmZmZmZEUAzMzMzMzMRQAAAAAAAABBA"},"yaxis":"y","type":"scatter"},{"customdata":[[2556,100000.0,0.5553312065566968,"Dating"],[48845,1000000.0,0.5421654119038425,"Dating"],[1999,100000.0,0.5180704969575584,"Dating"],[2430,500000.0,0.5106957328385899,"Dating"],[243950,10000000.0,0.694104938271605,"Dating"],[41605,500000.0,0.5583907406662825,"Dating"]],"hovertemplate":"\u003cb\u003e%{hovertext}\u003c\u002fb\u003e\u003cbr\u003e\u003cbr\u003eCategory=%{customdata[3]}\u003cbr\u003eApp Size (MB)=%{x:.1f}\u003cbr\u003eAverage Rating=%{y:.1f}\u003cbr\u003eInstalls=%{customdata[1]:,}\u003cbr\u003eReviews=%{customdata[0]:,}\u003cbr\u003eAvg_Sentiment_Subjectivity=%{customdata[2]:.3f}\u003cextra\u003e\u003c\u002fextra\u003e","hovertext":["Hily: Dating, Chat, Match, Meet & Hook up","CMB Free Dating App","BeWild Free Dating & Chat App","FlirtChat - \u2665Free Dating\u002fFlirting App\u2665","Hitwe - meet people and chat","2Date Dating App, Love and matching"],"legendgroup":"Dating","marker":{"color":"#00cc96","size":{"dtype":"f8","bdata":"AAAAAABq+EAAAAAAgIQuQQAAAAAAavhAAAAAAICEHkEAAAAA0BJjQQAAAACAhB5B"},"sizemode":"area","sizeref":250000.0,"symbol":"circle","opacity":0.75},"mode":"markers","name":"Dating","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"AAAAAAAATEAAAAAAAABEQAAAAAAAACBAAAAAAAAAKkAAAAAAAAA1QDMzMzMzMyBA"},"xaxis":"x","y":{"dtype":"f8","bdata":"ZmZmZmZmEEAAAAAAAAAQQDMzMzMzMwtAMzMzMzMzEUDNzMzMzMwQQJqZmZmZmRFA"},"yaxis":"y","type":"scatter"},{"customdata":[[411683,50000000.0,0.5555555555555556,"ENTERTAINMENT"],[1033,100000.0,0.533577256077256,"ENTERTAINMENT"]],"hovertemplate":"\u003cb\u003e%{hovertext}\u003c\u002fb\u003e\u003cbr\u003e\u003cbr\u003eCategory=%{customdata[3]}\u003cbr\u003eApp Size (MB)=%{x:.1f}\u003cbr\u003eAverage Rating=%{y:.1f}\u003cbr\u003eInstalls=%{customdata[1]:,}\u003cbr\u003eReviews=%{customdata[0]:,}\u003cbr\u003eAvg_Sentiment_Subjectivity=%{customdata[2]:.3f}\u003cextra\u003e\u003c\u002fextra\u003e","hovertext":["Amazon Prime Video","Cooking Channel"],"legendgroup":"ENTERTAINMENT","marker":{"color":"#ab63fa","size":{"dtype":"f8","bdata":"AAAAAITXh0EAAAAAAGr4QA=="},"sizemode":"area","sizeref":250000.0,"symbol":"circle","opacity":0.75},"mode":"markers","name":"ENTERTAINMENT","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"AAAAAAAAOEAAAAAAAAAwQA=="},"xaxis":"x","y":{"dtype":"f8","bdata":"zczMzMzMEEBmZmZmZmYQQA=="},"yaxis":"y","type":"scatter"},{"customdata":[[59800,5000000.0,0.5367871126316935,"GAME"],[1135631,50000000.0,0.5562993347603944,"GAME"],[1295557,100000000.0,0.5201833408656908,"GAME"],[2123381,100000000.0,0.5702711808929921,"GAME"],[141529,5000000.0,0.5402294533544533,"GAME"],[46416,10000000.0,0.5825,"GAME"],[59017,1000000.0,0.5235471409602994,"GAME"],[1083571,50000000.0,0.5181851050184384,"GAME"],[401425,10000000.0,0.5357966279447627,"GAME"],[42145,10000000.0,0.6062394781144781,"GAME"],[214878,10000000.0,0.5573153053087264,"GAME"],[4257,500000.0,0.5781031746031746,"GAME"],[22191,1000000.0,0.5493170399727777,"GAME"]],"hovertemplate":"\u003cb\u003e%{hovertext}\u003c\u002fb\u003e\u003cbr\u003e\u003cbr\u003eCategory=%{customdata[3]}\u003cbr\u003eApp Size (MB)=%{x:.1f}\u003cbr\u003eAverage Rating=%{y:.1f}\u003cbr\u003eInstalls=%{customdata[1]:,}\u003cbr\u003eReviews=%{customdata[0]:,}\u003cbr\u003eAvg_Sentiment_Subjectivity=%{customdata[2]:.3f}\u003cextra\u003e\u003c\u002fextra\u003e","hovertext":["Block Puzzle","Granny","Flow Free","Cut the Rope FULL FREE","Color by Number \u2013 New Coloring Book","Draw In","Honkai Impact 3rd","Doodle Jump","Dude Perfect 2","Candy Bomb","1LINE \u2013 One Line with One Touch","4 in a Row","Four In A Line"],"legendgroup":"GAME","marker":{"color":"pink","size":{"dtype":"f8","bdata":"AAAAANASU0EAAAAAhNeHQQAAAACE15dBAAAAAITXl0EAAAAA0BJTQQAAAADQEmNBAAAAAICELkEAAAAAhNeHQQAAAADQEmNBAAAAANASY0EAAAAA0BJjQQAAAACAhB5BAAAAAICELkE="},"sizemode":"area","sizeref":250000.0,"symbol":"circle","line":{"color":"white","width":1},"opacity":0.75},"mode":"markers","name":"GAME","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"MzMzMzMzH0AAAAAAAIBNQAAAAAAAACZAAAAAAACASEAAAAAAAAA4QAAAAAAAQFJAAAAAAACAVEAAAAAAAAD4fwAAAAAAgFFAAAAAAAAANEAAAAAAAAAkQAAAAAAAAPh\u002fAAAAAAAACEA="},"xaxis":"x","y":{"dtype":"f8","bdata":"ZmZmZmZmEkAAAAAAAAASQDMzMzMzMxFAmpmZmZmZEUDNzMzMzMwSQM3MzMzMzBBAzczMzMzMEkAzMzMzMzMRQAAAAAAAABJAmpmZmZmZEUBmZmZmZmYSQGZmZmZmZg5AZmZmZmZmDkA="},"yaxis":"y","type":"scatter"},{"customdata":[[138026,5000000.0,0.5200550796321473,"SOCIAL"]],"hovertemplate":"\u003cb\u003e%{hovertext}\u003c\u002fb\u003e\u003cbr\u003e\u003cbr\u003eCategory=%{customdata[3]}\u003cbr\u003eApp Size (MB)=%{x:.1f}\u003cbr\u003eAverage Rating=%{y:.1f}\u003cbr\u003eInstalls=%{customdata[1]:,}\u003cbr\u003eReviews=%{customdata[0]:,}\u003cbr\u003eAvg_Sentiment_Subjectivity=%{customdata[2]:.3f}\u003cextra\u003e\u003c\u002fextra\u003e","hovertext":["Blogger"],"legendgroup":"SOCIAL","marker":{"color":"#19d3f3","size":{"dtype":"f8","bdata":"AAAAANASU0E="},"sizemode":"area","sizeref":250000.0,"symbol":"circle","opacity":0.75},"mode":"markers","name":"SOCIAL","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"mpmZmZmZBUA="},"xaxis":"x","y":{"dtype":"f8","bdata":"mpmZmZmZDUA="},"yaxis":"y","type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"App Size (MB)","font":{"size":12}},"gridcolor":"#333333","zeroline":false},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Average Rating","font":{"size":12}},"range":[3.5,5],"gridcolor":"#333333","zeroline":false},"legend":{"title":{"text":"Category"},"tracegroupgap":0,"itemsizing":"constant","font":{"size":10}},"title":{"text":"App Size vs Average Rating","font":{"size":18}},"font":{"color":"white"},"hoverlabel":{"font":{"color":"white"},"bgcolor":"#111111"},"margin":{"l":20,"r":20,"t":50,"b":20},"plot_bgcolor":"black","paper_bgcolor":"black","height":550,"autosize":true},                        {"responsive": true, "displaylogo": false}                    )                };            </script>        </div>
+        </div>
+
+        <div class="unavailable">
+            <div class="clock-icon">&#9719;</div>
+            <h3>Analysis currently unavailable</h3>
+            <p>This visualization is displayed only during its scheduled window.</p>
+            <span class="window-label">5:00 PM – 7:00 PM IST</span>
+        </div>
+    </section>
+    
+    <section class="plot-container locked"
+             id="task-2"
+             data-start="18"
+             data-end="20">
+
+        <div class="plot-heading">
+            <div>
+                <span class="eyebrow">ANALYSIS 02</span>
+                <h2>Category Install Analysis</h2>
+                <p>Top five categories by total installs</p>
+            </div>
+            <span class="status">Scheduled</span>
+        </div>
+
+        <div class="plot-content">
+            <div>                            <div id="9174e454-186c-4e78-9e59-faa3eecd027a" class="plotly-graph-div" style="height:500px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("9174e454-186c-4e78-9e59-faa3eecd027a")) {                    Plotly.newPlot(                        "9174e454-186c-4e78-9e59-faa3eecd027a",                        [{"hovertemplate":"Installs \u003e 1 Million=True\u003cbr\u003eTotal Installs=%{text}\u003cbr\u003eCategory=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"True","marker":{"color":"#00e676","pattern":{"shape":""}},"name":"True","orientation":"h","showlegend":true,"text":{"dtype":"f8","bdata":"AAAA+PhB7UEAABBo0H7wQQAAcNDFUfFBAACQ8riU9UEAALCYFc\u002f9QQ=="},"textposition":"outside","x":[3926902720,4427941505,4649147655,5793091369,8001771915],"xaxis":"x","y":["VIDEO_PLAYERS","FAMILY","PHOTOGRAPHY","PRODUCTIVITY","TOOLS"],"yaxis":"y","type":"bar","texttemplate":"%{text:,}"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Total Installs"},"gridcolor":"#333333"},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"App Category"}},"legend":{"title":{"text":"Install Threshold"},"tracegroupgap":0},"title":{"text":"Top 5 App Categories by Global Install Volume","font":{"size":18}},"barmode":"relative","font":{"color":"white"},"margin":{"l":20,"r":50,"t":50,"b":20},"plot_bgcolor":"black","paper_bgcolor":"black","height":500,"autosize":true},                        {"responsive": true, "displaylogo": false}                    )                };            </script>        </div>
+        </div>
+
+        <div class="unavailable">
+            <div class="clock-icon">&#9719;</div>
+            <h3>Analysis currently unavailable</h3>
+            <p>This visualization is displayed only during its scheduled window.</p>
+            <span class="window-label">6:00 PM – 8:00 PM IST</span>
+        </div>
+    </section>
+    
+    <section class="plot-container locked"
+             id="task-3"
+             data-start="18"
+             data-end="21">
+
+        <div class="plot-heading">
+            <div>
+                <span class="eyebrow">ANALYSIS 03</span>
+                <h2>Monthly Install Trends</h2>
+                <p>Monthly performance and growth above 20%</p>
+            </div>
+            <span class="status">Scheduled</span>
+        </div>
+
+        <div class="plot-content">
+            <div>                            <div id="3c81ed97-7e45-4023-8df6-3db08ba0f8d2" class="plotly-graph-div" style="height:550px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("3c81ed97-7e45-4023-8df6-3db08ba0f8d2")) {                    Plotly.newPlot(                        "3c81ed97-7e45-4023-8df6-3db08ba0f8d2",                        [{"customdata":[[null,false],[19900.0,true],[0.0,false],[-90.0,false]],"hovertemplate":"\u003cb\u003e\u0938\u094c\u0902\u0926\u0930\u094d\u092f\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eInstalls: %{y:,}\u003cbr\u003eMoM Growth: %{customdata[0]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","mode":"lines+markers","name":"\u0938\u094c\u0902\u0926\u0930\u094d\u092f","x":["2018-03-01T00:00:00.000000000","2018-06-01T00:00:00.000000000","2018-07-01T00:00:00.000000000","2018-08-01T00:00:00.000000000"],"y":{"dtype":"i4","bdata":"iBMAAEBCDwBAQg8AoIYBAA=="},"type":"scatter"},{"customdata":[[null,false],[900.0,true],[100.0,true],[-99.4,false],[66.66666666666667,true],[0.0,false],[900.0,true],[-90.0,false],[0.0,false],[9910.0,true],[-80.01998001998003,false],[-47.5,false],[3766.6666666666665,true],[16.009852216748776,false],[115.71125265392782,true],[8.316929133858263,false]],"hovertemplate":"\u003cb\u003eBOOKS_AND_REFERENCE\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eInstalls: %{y:,}\u003cbr\u003eMoM Growth: %{customdata[0]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","mode":"lines+markers","name":"BOOKS_AND_REFERENCE","x":["2014-10-01T00:00:00.000000000","2014-11-01T00:00:00.000000000","2015-07-01T00:00:00.000000000","2016-06-01T00:00:00.000000000","2016-08-01T00:00:00.000000000","2017-02-01T00:00:00.000000000","2017-04-01T00:00:00.000000000","2017-05-01T00:00:00.000000000","2017-07-01T00:00:00.000000000","2017-08-01T00:00:00.000000000","2017-11-01T00:00:00.000000000","2018-04-01T00:00:00.000000000","2018-05-01T00:00:00.000000000","2018-06-01T00:00:00.000000000","2018-07-01T00:00:00.000000000","2018-08-01T00:00:00.000000000"],"y":{"dtype":"i4","bdata":"IKEHAEBLTACAlpgAYOoAAKCGAQCghgEAQEIPAKCGAQCghgEAkL2YAICEHgCQBRAAwIFrAmCwzgIASw4G0DqPBg=="},"type":"scatter"},{"customdata":[[null,false],[0.0,false],[-90.0,false],[9900.0,true],[0.0,false],[-50.0,false],[100.19999999999997,true],[-0.09990009990009652,false],[-90.0,false],[15100.0,true],[-23.684210526315784,false],[892.2413793103449,true]],"hovertemplate":"\u003cb\u003e\u0bb5\u0ba3\u0bbf\u0b95\u0bae\u0bcd\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eInstalls: %{y:,}\u003cbr\u003eMoM Growth: %{customdata[0]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","mode":"lines+markers","name":"\u0bb5\u0ba3\u0bbf\u0b95\u0bae\u0bcd","x":["2014-05-01T00:00:00.000000000","2015-09-01T00:00:00.000000000","2016-02-01T00:00:00.000000000","2016-03-01T00:00:00.000000000","2017-09-01T00:00:00.000000000","2017-11-01T00:00:00.000000000","2017-12-01T00:00:00.000000000","2018-02-01T00:00:00.000000000","2018-05-01T00:00:00.000000000","2018-06-01T00:00:00.000000000","2018-07-01T00:00:00.000000000","2018-08-01T00:00:00.000000000"],"y":{"dtype":"i4","bdata":"oIYBAKCGAQAQJwAAQEIPAEBCDwAgoQcAKEYPAEBCDwCghgEAAO\u002fnAIAAsQBgSdwG"},"type":"scatter"},{"customdata":[[null,false],[0.0,false],[5900.0,true],[-15.833333333333332,false]],"hovertemplate":"\u003cb\u003eCOMICS\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eInstalls: %{y:,}\u003cbr\u003eMoM Growth: %{customdata[0]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","mode":"lines+markers","name":"COMICS","x":["2017-03-01T00:00:00.000000000","2018-05-01T00:00:00.000000000","2018-07-01T00:00:00.000000000","2018-08-01T00:00:00.000000000"],"y":{"dtype":"i4","bdata":"oIYBAKCGAQCAjVsAkA5NAA=="},"type":"scatter"},{"customdata":[[null,false],[0.0,false],[9900.0,true],[-90.0,false],[100.0,true],[-50.0,false],[-89.0,false],[809.0909090909091,true],[1000.0,true],[-99.0909090909091,false],[-50.0,false],[9900.0,true],[220.00000000000003,true],[-36.875,false],[-90.0990099009901,false],[400.0,true],[122.00000000000001,true],[2744.4144144144143,true],[311.27228961454404,true]],"hovertemplate":"\u003cb\u003eCOMMUNICATION\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eInstalls: %{y:,}\u003cbr\u003eMoM Growth: %{customdata[0]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","mode":"lines+markers","name":"COMMUNICATION","x":["2014-01-01T00:00:00.000000000","2014-03-01T00:00:00.000000000","2014-07-01T00:00:00.000000000","2015-03-01T00:00:00.000000000","2015-08-01T00:00:00.000000000","2016-06-01T00:00:00.000000000","2016-07-01T00:00:00.000000000","2016-09-01T00:00:00.000000000","2016-11-01T00:00:00.000000000","2017-04-01T00:00:00.000000000","2017-09-01T00:00:00.000000000","2017-11-01T00:00:00.000000000","2018-01-01T00:00:00.000000000","2018-03-01T00:00:00.000000000","2018-04-01T00:00:00.000000000","2018-05-01T00:00:00.000000000","2018-06-01T00:00:00.000000000","2018-07-01T00:00:00.000000000","2018-08-01T00:00:00.000000000"],"y":{"dtype":"i4","bdata":"oIYBAKCGAQCAlpgAQEIPAICEHgBAQg8AsK0BAEBCDwDA2KcAoIYBAFDDAABAS0wAACT0ACAdmgBAQg8AQEtMAGBfqQBQqNESsLBlTQ=="},"type":"scatter"},{"customdata":[[null,false],[900.0,true],[900.0,true],[0.0,false],[0.0,false],[-90.0,false],[900.0,true],[0.0,false],[200.0,true],[-30.000000000000004,false],[1309.5238095238094,true],[-93.24324324324324,false]],"hovertemplate":"\u003cb\u003eEDUCATION\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eInstalls: %{y:,}\u003cbr\u003eMoM Growth: %{customdata[0]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","mode":"lines+markers","name":"EDUCATION","x":["2014-07-01T00:00:00.000000000","2015-01-01T00:00:00.000000000","2015-06-01T00:00:00.000000000","2015-08-01T00:00:00.000000000","2016-09-01T00:00:00.000000000","2016-12-01T00:00:00.000000000","2017-08-01T00:00:00.000000000","2017-10-01T00:00:00.000000000","2017-12-01T00:00:00.000000000","2018-05-01T00:00:00.000000000","2018-07-01T00:00:00.000000000","2018-08-01T00:00:00.000000000"],"y":{"dtype":"i4","bdata":"ECcAAKCGAQBAQg8AQEIPAEBCDwCghgEAQEIPAEBCDwDAxi0AIAsgAACpwwGAhB4A"},"type":"scatter"},{"customdata":[[null,false],[900.0,true],[0.0,false],[100.0,true],[-50.0,false],[-40.0,false],[251.66666666666666,true],[1704.7393364928912,true],[-82.35294117647058,false]],"hovertemplate":"\u003cb\u003eENTERTAINMENT\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eInstalls: %{y:,}\u003cbr\u003eMoM Growth: %{customdata[0]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","mode":"lines+markers","name":"ENTERTAINMENT","x":["2015-09-01T00:00:00.000000000","2016-04-01T00:00:00.000000000","2016-09-01T00:00:00.000000000","2018-01-01T00:00:00.000000000","2018-03-01T00:00:00.000000000","2018-05-01T00:00:00.000000000","2018-06-01T00:00:00.000000000","2018-07-01T00:00:00.000000000","2018-08-01T00:00:00.000000000"],"y":{"dtype":"i4","bdata":"QEIPAICWmACAlpgAAC0xAYCWmACAjVsA4PVBAQCMshYAZAEE"},"type":"scatter"},{"customdata":[[null,false],[4900.0,true],[120.00000000000001,true]],"hovertemplate":"\u003cb\u003eEVENTS\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eInstalls: %{y:,}\u003cbr\u003eMoM Growth: %{customdata[0]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","mode":"lines+markers","name":"EVENTS","x":["2018-05-01T00:00:00.000000000","2018-06-01T00:00:00.000000000","2018-07-01T00:00:00.000000000"],"y":{"dtype":"i4","bdata":"ECcAACChBwDgyBAA"},"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"shapes":[{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-06-01T00:00:00","x1":"2018-06-30T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2014-11-01T00:00:00","x1":"2014-11-30T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2015-07-01T00:00:00","x1":"2015-07-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2016-08-01T00:00:00","x1":"2016-08-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2017-04-01T00:00:00","x1":"2017-04-30T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2017-08-01T00:00:00","x1":"2017-08-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-05-01T00:00:00","x1":"2018-05-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-07-01T00:00:00","x1":"2018-07-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2016-03-01T00:00:00","x1":"2016-03-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2017-12-01T00:00:00","x1":"2017-12-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-06-01T00:00:00","x1":"2018-06-30T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-08-01T00:00:00","x1":"2018-08-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-07-01T00:00:00","x1":"2018-07-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2014-07-01T00:00:00","x1":"2014-07-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2015-08-01T00:00:00","x1":"2015-08-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2016-09-01T00:00:00","x1":"2016-09-30T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2016-11-01T00:00:00","x1":"2016-11-30T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2017-11-01T00:00:00","x1":"2017-11-30T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-01-01T00:00:00","x1":"2018-01-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-05-01T00:00:00","x1":"2018-05-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-06-01T00:00:00","x1":"2018-06-30T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-07-01T00:00:00","x1":"2018-07-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-08-01T00:00:00","x1":"2018-08-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2015-01-01T00:00:00","x1":"2015-01-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2015-06-01T00:00:00","x1":"2015-06-30T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2017-08-01T00:00:00","x1":"2017-08-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2017-12-01T00:00:00","x1":"2017-12-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-07-01T00:00:00","x1":"2018-07-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2016-04-01T00:00:00","x1":"2016-04-30T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-01-01T00:00:00","x1":"2018-01-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-06-01T00:00:00","x1":"2018-06-30T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-07-01T00:00:00","x1":"2018-07-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-06-01T00:00:00","x1":"2018-06-30T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"},{"fillcolor":"rgba(255, 105, 180, 0.18)","layer":"below","line":{"width":0},"type":"rect","x0":"2018-07-01T00:00:00","x1":"2018-07-31T00:00:00","xref":"x","y0":0,"y1":1,"yref":"y domain"}],"font":{"color":"white"},"title":{"text":"Monthly Install Trends by App Category","font":{"size":18}},"xaxis":{"title":{"text":"Month"},"gridcolor":"#333333"},"yaxis":{"title":{"text":"Total Installs"},"gridcolor":"#333333"},"hoverlabel":{"font":{"color":"white"},"bgcolor":"#111111"},"margin":{"l":20,"r":20,"t":50,"b":30},"plot_bgcolor":"black","paper_bgcolor":"black","legend":{"title":{"text":"Category"}},"height":550,"autosize":true},                        {"responsive": true, "displaylogo": false}                    )                };            </script>        </div>
+        </div>
+
+        <div class="unavailable">
+            <div class="clock-icon">&#9719;</div>
+            <h3>Analysis currently unavailable</h3>
+            <p>This visualization is displayed only during its scheduled window.</p>
+            <span class="window-label">6:00 PM – 9:00 PM IST</span>
+        </div>
+    </section>
+    
+    <section class="plot-container locked"
+             id="task-4"
+             data-start="16"
+             data-end="18">
+
+        <div class="plot-heading">
+            <div>
+                <span class="eyebrow">ANALYSIS 04</span>
+                <h2>Cumulative Installs</h2>
+                <p>Cumulative installs by app category</p>
+            </div>
+            <span class="status">Scheduled</span>
+        </div>
+
+        <div class="plot-content">
+            <div>                            <div id="65d5227c-f160-473b-97da-176244716a97" class="plotly-graph-div" style="height:550px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("65d5227c-f160-473b-97da-176244716a97")) {                    Plotly.newPlot(                        "65d5227c-f160-473b-97da-176244716a97",                        [{"customdata":[["PARENTING",100000,null,false],["PARENTING",10000000,9900.0,true],["PARENTING",600000,-94.0,false]],"fillpattern":{"shape":""},"hovertemplate":"\u003cb\u003e%{fullData.name}\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eCumulative Installs: %{y:,}\u003cbr\u003eMonthly Installs: %{customdata[1]:,}\u003cbr\u003eMoM Growth: %{customdata[2]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"PARENTING","line":{"color":"#636efa"},"marker":{"symbol":"circle"},"mode":"lines","name":"PARENTING","orientation":"v","showlegend":true,"stackgroup":"1","x":["2018-03-01T00:00:00.000000000","2018-05-01T00:00:00.000000000","2018-07-01T00:00:00.000000000"],"xaxis":"x","y":{"dtype":"i4","bdata":"oIYBACAdmgDgRKMA"},"yaxis":"y","type":"scatter"},{"customdata":[["PERSONALIZATION",1000000,null,false],["PERSONALIZATION",1000000,0.0,false],["PERSONALIZATION",10000000,900.0,true],["PERSONALIZATION",10000000,0.0,false],["PERSONALIZATION",10000000,0.0,false],["PERSONALIZATION",11500000,14.999999999999991,false],["PERSONALIZATION",20000000,73.91304347826086,true]],"fillpattern":{"shape":""},"hovertemplate":"\u003cb\u003e%{fullData.name}\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eCumulative Installs: %{y:,}\u003cbr\u003eMonthly Installs: %{customdata[1]:,}\u003cbr\u003eMoM Growth: %{customdata[2]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"PERSONALIZATION","line":{"color":"#EF553B"},"marker":{"symbol":"circle"},"mode":"lines","name":"PERSONALIZATION","orientation":"v","showlegend":true,"stackgroup":"1","x":["2016-12-01T00:00:00.000000000","2017-09-01T00:00:00.000000000","2018-01-01T00:00:00.000000000","2018-02-01T00:00:00.000000000","2018-06-01T00:00:00.000000000","2018-07-01T00:00:00.000000000","2018-08-01T00:00:00.000000000"],"xaxis":"x","y":{"dtype":"i4","bdata":"QEIPAICEHgAAG7cAgLFPAQBI6AHgwZcC4O7IAw=="},"yaxis":"y","type":"scatter"},{"customdata":[["PHOTOGRAPHY",1000000,null,false],["PHOTOGRAPHY",50000000,4900.0,true],["PHOTOGRAPHY",10000000,-80.0,false],["PHOTOGRAPHY",15000000,50.0,true],["PHOTOGRAPHY",5000000,-66.66666666666667,false],["PHOTOGRAPHY",10000000,100.0,true],["PHOTOGRAPHY",10000000,0.0,false],["PHOTOGRAPHY",2000000,-80.0,false],["PHOTOGRAPHY",11000000,450.0,true],["PHOTOGRAPHY",71000000,545.4545454545454,true],["PHOTOGRAPHY",258000000,263.38028169014086,true],["PHOTOGRAPHY",526500000,104.06976744186048,true]],"fillpattern":{"shape":""},"hovertemplate":"\u003cb\u003e%{fullData.name}\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eCumulative Installs: %{y:,}\u003cbr\u003eMonthly Installs: %{customdata[1]:,}\u003cbr\u003eMoM Growth: %{customdata[2]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"\u5199\u771f","line":{"color":"#00cc96"},"marker":{"symbol":"circle"},"mode":"lines","name":"\u5199\u771f","orientation":"v","showlegend":true,"stackgroup":"1","x":["2014-11-01T00:00:00.000000000","2017-03-01T00:00:00.000000000","2017-06-01T00:00:00.000000000","2017-07-01T00:00:00.000000000","2017-10-01T00:00:00.000000000","2017-12-01T00:00:00.000000000","2018-01-01T00:00:00.000000000","2018-03-01T00:00:00.000000000","2018-05-01T00:00:00.000000000","2018-06-01T00:00:00.000000000","2018-07-01T00:00:00.000000000","2018-08-01T00:00:00.000000000"],"xaxis":"x","y":{"dtype":"i4","bdata":"QEIPAMAyCgNAyaIDAKuHBED20wTAjGwFQCMFBsCnIwaAgMsGQOAGC8CkZxpgZck5"},"yaxis":"y","type":"scatter"},{"customdata":[["PRODUCTIVITY",1000000,null,false],["PRODUCTIVITY",100000,-90.0,false],["PRODUCTIVITY",15000000,14900.0,true],["PRODUCTIVITY",166000000,1006.6666666666666,true],["PRODUCTIVITY",605000000,264.4578313253012,true]],"fillpattern":{"shape":""},"hovertemplate":"\u003cb\u003e%{fullData.name}\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eCumulative Installs: %{y:,}\u003cbr\u003eMonthly Installs: %{customdata[1]:,}\u003cbr\u003eMoM Growth: %{customdata[2]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Productividad","line":{"color":"#ab63fa"},"marker":{"symbol":"circle"},"mode":"lines","name":"Productividad","orientation":"v","showlegend":true,"stackgroup":"1","x":["2016-10-01T00:00:00.000000000","2018-02-01T00:00:00.000000000","2018-06-01T00:00:00.000000000","2018-07-01T00:00:00.000000000","2018-08-01T00:00:00.000000000"],"xaxis":"x","y":{"dtype":"i4","bdata":"QEIPAODIEACgqvUAIKDaCmAx6i4="},"yaxis":"y","type":"scatter"},{"customdata":[["TOOLS",50000,null,false],["TOOLS",1000000,1900.0,true],["TOOLS",10000000,900.0,true],["TOOLS",222600000,2126.0,true],["TOOLS",120000000,-46.091644204851754,false]],"fillpattern":{"shape":""},"hovertemplate":"\u003cb\u003e%{fullData.name}\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eCumulative Installs: %{y:,}\u003cbr\u003eMonthly Installs: %{customdata[1]:,}\u003cbr\u003eMoM Growth: %{customdata[2]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"TOOLS","line":{"color":"#FFA15A"},"marker":{"symbol":"circle"},"mode":"lines","name":"TOOLS","orientation":"v","showlegend":true,"stackgroup":"1","x":["2017-08-01T00:00:00.000000000","2018-01-01T00:00:00.000000000","2018-05-01T00:00:00.000000000","2018-07-01T00:00:00.000000000","2018-08-01T00:00:00.000000000"],"xaxis":"x","y":{"dtype":"i4","bdata":"UMMAAJAFEAAQnKgAUDftDVBFFBU="},"yaxis":"y","type":"scatter"},{"customdata":[["TRAVEL_AND_LOCAL",50000,null,false],["TRAVEL_AND_LOCAL",5000000,9900.0,true],["TRAVEL_AND_LOCAL",6000000,19.999999999999996,false],["TRAVEL_AND_LOCAL",31100000,418.33333333333337,true],["TRAVEL_AND_LOCAL",35100000,12.86173633440515,false]],"fillpattern":{"shape":""},"hovertemplate":"\u003cb\u003e%{fullData.name}\u003c\u002fb\u003e\u003cbr\u003eMonth: %{x|%b %Y}\u003cbr\u003eCumulative Installs: %{y:,}\u003cbr\u003eMonthly Installs: %{customdata[1]:,}\u003cbr\u003eMoM Growth: %{customdata[2]:.2f}%\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"Voyage et Local","line":{"color":"#19d3f3"},"marker":{"symbol":"circle"},"mode":"lines","name":"Voyage et Local","orientation":"v","showlegend":true,"stackgroup":"1","x":["2017-10-01T00:00:00.000000000","2018-04-01T00:00:00.000000000","2018-06-01T00:00:00.000000000","2018-07-01T00:00:00.000000000","2018-08-01T00:00:00.000000000"],"xaxis":"x","y":{"dtype":"i4","bdata":"UMMAAJAOTQAQnKgAcCiDAtC9mgQ="},"yaxis":"y","type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Month"},"gridcolor":"#333333"},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Cumulative Installs"},"gridcolor":"#333333"},"legend":{"title":{"text":"Category"},"tracegroupgap":0},"title":{"text":"Cumulative App Installs Over Time by Category","font":{"size":18}},"font":{"color":"white"},"hoverlabel":{"font":{"color":"white"},"bgcolor":"#111111"},"margin":{"l":20,"r":20,"t":50,"b":30},"plot_bgcolor":"black","paper_bgcolor":"black","height":550,"autosize":true},                        {"responsive": true, "displaylogo": false}                    )                };            </script>        </div>
+        </div>
+
+        <div class="unavailable">
+            <div class="clock-icon">&#9719;</div>
+            <h3>Analysis currently unavailable</h3>
+            <p>This visualization is displayed only during its scheduled window.</p>
+            <span class="window-label">4:00 PM – 6:00 PM IST</span>
+        </div>
+    </section>
+    
+    <section class="plot-container locked"
+             id="task-5"
+             data-start="15"
+             data-end="17">
+
+        <div class="plot-heading">
+            <div>
+                <span class="eyebrow">ANALYSIS 05</span>
+                <h2>Ratings vs Reviews</h2>
+                <p>Top ten categories by installs</p>
+            </div>
+            <span class="status">Scheduled</span>
+        </div>
+
+        <div class="plot-content">
+            <div>                            <div id="f76c4cf8-57a6-4edc-b286-e34bf1464614" class="plotly-graph-div" style="height:550px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("f76c4cf8-57a6-4edc-b286-e34bf1464614")) {                    Plotly.newPlot(                        "f76c4cf8-57a6-4edc-b286-e34bf1464614",                        [{"hovertemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e\u003cbr\u003eAverage Rating: %{y:.2f}\u003cextra\u003e\u003c\u002fextra\u003e","name":"Average Rating","x":["SPORTS","GAME","FAMILY","ENTERTAINMENT","PERSONALIZATION","PHOTOGRAPHY","LIFESTYLE","EDUCATION","TOOLS","TRAVEL_AND_LOCAL"],"y":{"dtype":"f8","bdata":"8RVf8RVfEUBBpw102kARQEbasQJhpBFAMzMzMzMzEUBmZmZmZuYRQJqZmZmZmRBAhetRuB6FEUCamZmZmZkRQM3MzMzMzBBAZmZmZmZmEEA="},"yaxis":"y","type":"bar"},{"hovertemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e\u003cbr\u003eTotal Reviews: %{y:,}\u003cextra\u003e\u003c\u002fextra\u003e","name":"Total Reviews","x":["SPORTS","GAME","FAMILY","ENTERTAINMENT","PERSONALIZATION","PHOTOGRAPHY","LIFESTYLE","EDUCATION","TOOLS","TRAVEL_AND_LOCAL"],"y":{"dtype":"i4","bdata":"QT4eAJWVJAC3KCsA90INAFxhAgAImggAOacAAC3hAABKHwAAzgMAAA=="},"yaxis":"y2","type":"bar"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"font":{"color":"white"},"title":{"text":"Top 10 App Categories by Installs: Rating vs Reviews","font":{"size":18}},"xaxis":{"title":{"text":"App Category"},"tickangle":-45},"yaxis":{"title":{"text":"Average Rating"},"range":[0,5]},"yaxis2":{"title":{"text":"Total Reviews"},"overlaying":"y","side":"right"},"margin":{"l":20,"r":60,"t":50,"b":100},"barmode":"group","plot_bgcolor":"black","paper_bgcolor":"black","legend":{"title":{"text":"Metric"}},"height":550,"autosize":true},                        {"responsive": true, "displaylogo": false}                    )                };            </script>        </div>
+        </div>
+
+        <div class="unavailable">
+            <div class="clock-icon">&#9719;</div>
+            <h3>Analysis currently unavailable</h3>
+            <p>This visualization is displayed only during its scheduled window.</p>
+            <span class="window-label">3:00 PM – 5:00 PM IST</span>
+        </div>
+    </section>
+    
+    <section class="plot-container locked"
+             id="task-6"
+             data-start="13"
+             data-end="14">
+
+        <div class="plot-heading">
+            <div>
+                <span class="eyebrow">ANALYSIS 06</span>
+                <h2>Free vs Paid Performance</h2>
+                <p>Average installs and estimated revenue</p>
+            </div>
+            <span class="status">Scheduled</span>
+        </div>
+
+        <div class="plot-content">
+            <div>                            <div id="6612e0f0-866b-4365-af82-ad968b705775" class="plotly-graph-div" style="height:550px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("6612e0f0-866b-4365-af82-ad968b705775")) {                    Plotly.newPlot(                        "6612e0f0-866b-4365-af82-ad968b705775",                        [{"hovertemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e\u003cbr\u003eAverage Installs: %{y:,.0f}\u003cextra\u003e\u003c\u002fextra\u003e","name":"Average Installs","x":["FAMILY - Free","FAMILY - Paid","GAME - Free","GAME - Paid","TOOLS - Free","TOOLS - Paid"],"y":{"dtype":"f8","bdata":"07DdLAGBWEGrqqqqChMWQVVVVf04qH9BAAAAAABM7UA655xz2Xx0QQAAAAAAavhA"},"yaxis":"y","type":"bar"},{"hovertemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e\u003cbr\u003eAverage Revenue: $%{y:,.2f}\u003cextra\u003e\u003c\u002fextra\u003e","mode":"lines+markers","name":"Average Revenue","x":["FAMILY - Free","FAMILY - Paid","GAME - Free","GAME - Paid","TOOLS - Free","TOOLS - Paid"],"y":{"dtype":"f8","bdata":"AAAAAAAAAABVVVVVwTkiQQAAAAAAAAAAAAAAAHCuDUEAAAAAAAAAAAAAAACgZxtB"},"yaxis":"y2","type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"font":{"color":"white"},"title":{"text":"Average Installs vs Revenue: Free and Paid Apps","font":{"size":18}},"xaxis":{"title":{"text":"Category and App Type"},"tickangle":-45},"yaxis":{"title":{"text":"Average Installs"},"gridcolor":"#333333","zeroline":false},"yaxis2":{"title":{"text":"Average Revenue ($)"},"overlaying":"y","side":"right","showgrid":false},"hoverlabel":{"font":{"color":"white"},"bgcolor":"#111111"},"margin":{"l":20,"r":70,"t":50,"b":110},"plot_bgcolor":"black","paper_bgcolor":"black","legend":{"title":{"text":"Metric"}},"height":550,"autosize":true},                        {"responsive": true, "displaylogo": false}                    )                };            </script>        </div>
+        </div>
+
+        <div class="unavailable">
+            <div class="clock-icon">&#9719;</div>
+            <h3>Analysis currently unavailable</h3>
+            <p>This visualization is displayed only during its scheduled window.</p>
+            <span class="window-label">1:00 PM – 2:00 PM IST</span>
+        </div>
+    </section>
+    
+</div>
+
+<div class="note">
+    <strong>Data interpretation:</strong>
+    Revenue is estimated from recorded installs multiplied by listed app
+    price; it does not represent verified developer earnings. The source
+    dataset has no country-level geographic field, so category installs
+    are represented as a bar chart. Display schedules use Asia/Kolkata time.
+</div>
+
+<footer>
+    Google Play Store Analytics Dashboard<br>
+    Built with Python, Pandas and Plotly
+</footer>
+
+<script>
+function updateDashboard() {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Kolkata",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hourCycle: "h23"
+    }).formatToParts(new Date());
+
+    const time = {};
+    parts.forEach(part => {
+        time[part.type] = part.value;
+    });
+
+    const currentMinutes =
+        Number(time.hour) * 60 + Number(time.minute);
+
+    document.getElementById("ist-clock").textContent =
+        "IST " + time.hour + ":" + time.minute + ":" + time.second;
+
+    document.querySelectorAll(".plot-container[data-start]").forEach(card => {
+        const start = Number(card.dataset.start) * 60;
+        const end = Number(card.dataset.end) * 60;
+        const available =
+            currentMinutes >= start && currentMinutes < end;
+
+        const wasLocked = card.classList.contains("locked");
+
+        card.classList.toggle("available", available);
+        card.classList.toggle("locked", !available);
+
+        const status = card.querySelector(".status");
+        if (status) {
+            status.textContent = available ? "Available now" : "Scheduled";
+        }
+
+        if (available && wasLocked) {
+            card.querySelectorAll(".js-plotly-plot").forEach(chart => {
+                if (window.Plotly) {
+                    window.Plotly.Plots.resize(chart);
+                }
+            });
+        }
+    });
+}
+
+updateDashboard();
+setInterval(updateDashboard, 1000);
+</script>
+
+</body>
+</html>
