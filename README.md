@@ -8,19 +8,18 @@ An interactive data analytics project exploring Google Play Store applications, 
 
 ## Overview
 
-This project analyzes Google Play Store app data to identify patterns in application ratings, installs, reviews, categories, and sentiment. The analysis is developed in a Jupyter Notebook and presented through interactive Plotly visualizations in HTML.
+This project analyzes Google Play Store app data to identify patterns in application ratings, installs, reviews, categories, and sentiment. The analysis is developed in a Jupyter Notebook and presented through interactive Plotly visualizations, then assembled into a single HTML dashboard for sharing and display.
 
 The repository includes the consolidated dashboard, the analysis notebook, and a `Tasks/` folder containing individual HTML visualizations created during the project training work.
 
 ## Project Structure
 
 ```text
-google-play-store-data-analytics/
 ├── README.md
 ├── index.html
 ├── Google Play Store Analytics.ipynb
-├── apps.csv                         # Source dataset; publish only if redistribution is permitted
-├── user_reviews.csv                 # Source dataset; publish only if redistribution is permitted
+├── apps.csv
+├── user_reviews.csv
 └── Tasks/
     ├── Task 1 - App Size Rating Bubble.html
     ├── Task 2 - Top 5 Category Installs.html
@@ -36,7 +35,7 @@ google-play-store-data-analytics/
 
 ### Main dashboard — `index.html`
 
-The consolidated dashboard brings the task visualizations together in one HTML page. It is designed to display interactive charts and apply time-based visibility windows using Indian Standard Time (IST).
+The consolidated dashboard brings the task visualizations together in one HTML page. It is designed to display interactive charts and apply time-based visibility windows using Indian Standard Time (IST), as required by the project training workflow.
 
 ### Analysis notebook — `Google Play Store Analytics.ipynb`
 
@@ -57,7 +56,7 @@ This folder contains standalone HTML exports for the six project-training tasks.
 | 5 | Rating and review comparison for selected top categories | Grouped/dual-axis comparison chart |
 | 6 | Average installs and estimated revenue comparison for free and paid apps in selected categories | Dual-axis chart |
 
-**Geographic-data note:** The app dataset shown for this project does not include a country or geographic-location field. Task 2 therefore uses a category-based visualization rather than presenting an unsupported geographic choropleth.
+**Geographic-data note:** The app dataset shown for this project does not include a country or geographic-location field. Task 2 therefore uses a category-based visualization rather than presenting geographic data.
 
 ## Datasets
 
@@ -128,10 +127,10 @@ Because `index.html` is in the repository root, GitHub Pages can use it as the s
 
 ## Important Notes
 
-- **Estimated revenue:** If calculated as installs multiplied by listed app price, revenue is only an estimate. Install counts may be approximate, and the calculation does not account for store fees, taxes, subscriptions, in-app purchases, refunds, or other revenue sources.
+- **Estimated revenue:** If calculated as installs multiplied by listed app price, revenue is only an estimate. Install counts may be approximate, and the calculation does not account for store fees or discounting.
 - **No fabricated geography:** Category-level install totals should not be interpreted as country-level data.
 - **Time-based visibility:** The dashboard's visibility windows use IST. Verify the published page during each task's intended time window and ensure JavaScript is enabled.
-- **Dataset licensing:** Before making the repository public, confirm that you are allowed to redistribute the CSV files. If uncertain, do not upload them; instead, document their source and how to obtain them.
+- **Dataset licensing:** Before making the repository public, confirm that you are allowed to redistribute the CSV files. If uncertain, do not upload them; instead, document their source and how they were obtained.
 - **Notebook size:** Clear large or unnecessary notebook outputs before committing if they make the repository difficult to browse.
 
 ## Future Improvements
