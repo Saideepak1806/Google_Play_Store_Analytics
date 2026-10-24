@@ -18,8 +18,8 @@ The repository includes the consolidated dashboard, the analysis notebook, and a
 ├── README.md
 ├── index.html
 ├── Google Play Store Analytics.ipynb
-├── apps.csv                         # Source dataset; publish only if redistribution is permitted
-├── user_reviews.csv                 # Source dataset; publish only if redistribution is permitted
+├── apps.csv                       
+├── user_reviews.csv                 
 └── Tasks/
     ├── Task 1 - App Size Rating Bubble.html
     ├── Task 2 - Top 5 Category Installs.html
